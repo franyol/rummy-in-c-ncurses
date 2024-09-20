@@ -6,4 +6,10 @@ Recreating the rummy game using ncurses
 
 1. ncurses
 
+## Build
 
+Tests: `make tests`
+
+Main: `make main`
+
+All: `make all`

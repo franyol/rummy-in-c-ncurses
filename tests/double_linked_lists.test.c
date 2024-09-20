@@ -57,7 +57,7 @@ void test_swap() {
 	
 	data.value = input[0];
 	head = TestData_create_new_node(data);
-	for (int i = 1; i < len; i++) {
+	for (size_t i = 1; i < len; i++) {
 		data.value = input[i];
 		TestData_dll_append(head, TestData_create_new_node(data));
 	}
@@ -87,7 +87,7 @@ void test_pop_insert() {
 	
 	data.value = input[0];
 	head = TestData_create_new_node(data);
-	for (int i = 0; i < len; i++) {
+	for (size_t i = 0; i < len; i++) {
 		data.value = input[i];
 		TestData_dll_append(head, TestData_create_new_node(data));
 	}
