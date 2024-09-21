@@ -38,9 +38,13 @@ $(MAIN_EXEC): $(OBJ_FILES)
 tests: $(BUILD_DIR) $(TEST_EXECUTABLES)
 
 # Build individual test executables
-$(BUILD_DIR)/%.test: $(TEST_DIR)/%.test.c
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
-	@echo "Compiled test executable: $@"
+$(BUILD_DIR)/double_linked_lists.test: $(TEST_DIR)/double_linked_lists.test.c
+	$(CC) $(CFLAGS) $(TEST_DIR)/double_linked_lists.test.c -o $(BUILD_DIR)/double_linked_lists.test $(LDFLAGS)
+	@echo "Compiled test executable: double_linked_lists"
+
+$(BUILD_DIR)/fsm.test: $(TEST_DIR)/fsm.test.c $(BUILD_DIR)/fsm.o
+	$(CC) $(CFLAGS) $(TEST_DIR)/fsm.test.c -o $(BUILD_DIR)/fsm.test $(BUILD_DIR)/fsm.o $(LDFLAGS)
+	@echo "Compiled test executable: fsm"
 
 # Compile object files for source
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c

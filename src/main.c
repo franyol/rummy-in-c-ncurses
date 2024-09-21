@@ -24,7 +24,8 @@ void mainLoop( int freq ) {
 		if (ch == 'q') break;
 
 		erase_tile(&myTile);
-		myTile.x++;
+		myTile.x = (myTile.x + 1) % (getmaxx(stdscr)-6);
+		myTile.color = (myTile.color + 1) % 4;
 		print_tile(&myTile);
 	
 		do {
