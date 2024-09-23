@@ -3,16 +3,16 @@
 #include <stdio.h>
 #include <ncurses.h>
 #include <sys/time.h>
-#include "../include/tile.h"
 #include "../include/game_states.h"
 #include "../include/colors.h"
 
 void mainLoop( int freq ) {
 	struct timeval elapsed, f, start, end;
-	FSM_State states[1] = {
-	{START_MENU, NULL, start_menu_on_enter, start_menu_on_exit, start_menu_update}
+	FSM_State states[2] = {
+	{START_MENU, NULL, start_menu_on_enter, start_menu_on_exit, start_menu_update},
+	{SETTINGS, NULL, settings_on_enter, settings_on_exit, settings_update}
 	};
-	FSM fsm = {states, 1, -1};
+	FSM fsm = {states, sizeof(states)/sizeof(FSM_State), -1};
 
 	f.tv_sec = 1/freq;
 	f.tv_usec = (1000000/freq) % 1000000;
@@ -23,16 +23,6 @@ void mainLoop( int freq ) {
 	}
 
 	for (;;) {
-		/*
-		ch = getch();
-		if (ch == 'q') break;
-
-		erase_tile(&myTile);
-		myTile.x = (myTile.x + 1) % (getmaxx(stdscr)-6);
-		myTile.color = (myTile.color + 1) % 4;
-		print_tile(&myTile);
-		*/
-
 		fsm_update(&fsm);
 		if (fsm.current == -1) break;
 	

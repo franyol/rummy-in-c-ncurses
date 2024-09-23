@@ -1,29 +1,16 @@
 #include "../include/game_states.h"
-#include "../include/colors.h"
+#include "../include/print_utils.h"
 #include <ncurses.h>
-
-void erase_options(int y, int x, StartMenuData* this) {
-	attrset(A_NORMAL | COLOR_PAIR(BLACK));
-	for (int i=0; i<this->len; i++) {
-		mvprintw(y/2-1+i, x/2-5, "%*s", 50, "");
-	}
-}
-
-void print_options(int y, int x, StartMenuData* this) {
-	for (int i=0; i<this->len; i++) {
-		if (this->index == i) {
-			attrset(A_STANDOUT | COLOR_PAIR(BLACK));
-		} else {
-			attrset(A_NORMAL | COLOR_PAIR(BLACK));
-		}
-		mvprintw(y/2-1+i, x/2-5, "%s", this->options[i]);
-	}
-}
 
 void start_menu_on_enter(FSM_State *self, const void *arg) {
 	static char *options[] = {"play", "settings", "quit"};
-	static StartMenuData smdata = {options, 3, 0};
-	self->data = (void*) &smdata;
+	static StartMenuData smdata = {options, 3, 0, 1110, GAME};
+	if (self->data == NULL) self->data = (void*) &smdata;
+
+	if (arg != NULL) {
+		smdata.dificulty = ((StartMenuArg*) arg)->dificulty;
+		free((StartMenuArg*) arg);
+	}
 }
 
 int start_menu_update(FSM_State *self) {
@@ -31,27 +18,58 @@ int start_menu_update(FSM_State *self) {
 	StartMenuData* this = (StartMenuData*) self->data;
 
 	switch(getch()) {
-		case 'q':
-			return -1;
-			break;
 		case KEY_DOWN:
+		case 's':
 			this->index = (this->index + 1) % this->len;
 			break;
 		case KEY_UP:
+		case 'w':
 			this->index = (this->index > 0) ? this->index - 1 : this->len - 1;
+			break;
+		case '\n':
+			switch(this->index) {
+				case 0:
+					this->toState = GAME;
+					return GAME;
+				case 1:
+					this->toState = SETTINGS;
+					return SETTINGS;
+				case 2:
+					return -1;
+				default:
+					break;
+			}
 			break;
 		default:
 			break;
 	}
 	flushinp();
 	
-	erase_options(y, x, this);
+	erase_options(y, x, this->len);
 	getmaxyx(stdscr, y, x);
-	print_options(y, x, this);
+	print_options(y, x, this->len, this->index, this->options);
 
 	return START_MENU;
 }
 
 void start_menu_on_exit(FSM_State *self, void **arg) {
+	StartMenuData *this = (StartMenuData*) self->data;
+	SettingsArg* seta; 
+	GameArg* gamea;
+
+	switch(this->toState) {
+		case GAME:
+			gamea = malloc(sizeof(GameArg));
+			gamea->dificulty = this->dificulty;
+			*arg = (void*) gamea;
+			break;
+		case SETTINGS:
+			seta = malloc(sizeof(SettingsArg));
+			seta->dificulty = this->dificulty;
+			*arg = (void*) seta;
+			break;
+		default:
+			break;
+	}
 }
 
