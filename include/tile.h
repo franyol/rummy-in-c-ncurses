@@ -1,14 +1,7 @@
 #ifndef _TILE_H_
 #define _TILE_H_
 
-#include <ncurses.h>
-
-typedef enum Color {
-	BLACK,
-	RED,
-	BLUE,
-	YELLOW
-} Color;
+#include "../include/colors.h"
 
 typedef struct Tile {
 	int x;
@@ -26,7 +19,5 @@ void print_tile(const Tile* tile);
  *	Erases tile from screen
  */
 void erase_tile(const Tile* tile);
-
-void curses_init_tile(void);
 
 #endif

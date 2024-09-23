@@ -1,5 +1,7 @@
 #include "../include/tile.h"
 
+#include <ncurses.h>
+
 const char tileframe[5][7] = {
 " ---- ",
 "|    |",
@@ -7,13 +9,6 @@ const char tileframe[5][7] = {
 "|    |",
 " ---- ",
 };
-
-void curses_init_tile(void) {
-	init_pair(BLACK, COLOR_WHITE, COLOR_BLACK);
-	init_pair(RED, COLOR_WHITE, COLOR_RED);
-	init_pair(YELLOW, COLOR_WHITE, COLOR_YELLOW);
-	init_pair(BLUE, COLOR_WHITE, BLUE);
-}
 
 void print_tile(const Tile* tile) {
 	attrset(A_NORMAL | COLOR_PAIR(tile->color) | A_BOLD);

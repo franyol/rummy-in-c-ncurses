@@ -4,10 +4,15 @@
 #include <ncurses.h>
 #include <sys/time.h>
 #include "../include/tile.h"
+#include "../include/game_states.h"
+#include "../include/colors.h"
 
 void mainLoop( int freq ) {
 	struct timeval elapsed, f, start, end;
-	char ch;
+	FSM_State states[1] = {
+	{START_MENU, NULL, start_menu_on_enter, start_menu_on_exit, start_menu_update}
+	};
+	FSM fsm = {states, 1, -1};
 
 	f.tv_sec = 1/freq;
 	f.tv_usec = (1000000/freq) % 1000000;
@@ -17,9 +22,8 @@ void mainLoop( int freq ) {
 		exit(EXIT_FAILURE);
 	}
 
-	Tile myTile = {0, 5, 13, BLACK};
-
 	for (;;) {
+		/*
 		ch = getch();
 		if (ch == 'q') break;
 
@@ -27,6 +31,10 @@ void mainLoop( int freq ) {
 		myTile.x = (myTile.x + 1) % (getmaxx(stdscr)-6);
 		myTile.color = (myTile.color + 1) % 4;
 		print_tile(&myTile);
+		*/
+
+		fsm_update(&fsm);
+		if (fsm.current == -1) break;
 	
 		do {
 			if (gettimeofday(&end, NULL) != 0) {
@@ -52,10 +60,9 @@ int main() {
 	curs_set(0);
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
+	init_pair_colors();
 
-	curses_init_tile();
-
-	mainLoop(3);
+	mainLoop(15);
 
 	endwin();
 	exit(EXIT_SUCCESS);

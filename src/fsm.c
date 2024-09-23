@@ -17,7 +17,8 @@ void fsm_update(FSM *fsm){
 	if (next_state != fsm->current) {
 		void *arg = NULL;
 		fsm->states[fsm->current].on_exit(&fsm->states[fsm->current], &arg);
-		fsm->states[next_state].on_enter(&fsm->states[next_state], arg);
+		if (next_state >= 0 && next_state < fsm->len)
+			fsm->states[next_state].on_enter(&fsm->states[next_state], arg);
 		fsm->current = next_state;
 	}
 }
