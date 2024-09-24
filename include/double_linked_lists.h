@@ -106,4 +106,32 @@
 		return head; \
 	} 
 
+typedef struct NodeState {
+	void *who;
+	void *prev;
+	void *next;
+} NodeState;
+
+DECLARE_DOUBLE_LINKED_LIST(NodeState);
+
+#define dll_save_state(type, head, dest) \
+	type *node; \
+	NodeState temp = {(void*) head, (void*) head->prev, (void*) head->next}; \
+    dest = NodeState_create_new_node(temp) \
+	for (node=head->next; node != NULL; node=node->next) { \
+		temp.who = (void*) node; \
+		temp.prev = (void*) node->prev; \
+		temp.next = (void*) node->next; \
+		NodeState_dll_append(dest, NodeState_create_new_node(temp); \
+	}
+
+#define dll_load_state(type, src) \
+	type *node; \
+	NodeStateDLLNode *srcnode = src; \
+	for (srcnode = src; srcnode != NULL; srcnode = srcnode->next) { \
+		node = (type*) srcnode->who; \
+		node->who->next = (type*) srcnode->next; \
+		node->who->prev = (type*) srcnode->prev; \
+	}
+
 #endif

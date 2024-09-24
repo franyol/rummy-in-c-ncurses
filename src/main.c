@@ -56,7 +56,7 @@ int main() {
 	nodelay(stdscr, TRUE);
 	init_pair_colors();
 
-	mainLoop(15);
+	mainLoop(300);
 
 	endwin();
 	exit(EXIT_SUCCESS);

@@ -5,64 +5,18 @@
 #include <time.h>
 #include <ncurses.h>
 
-DECLARE_DOUBLE_LINKED_LIST(TileDLLNode);
-DEFINE_DOUBLE_LINKED_LIST(TileDLLNode);
-
-typedef enum Hand {
-	DECK,
-	P1,
-	P2,
-	P3,
-	P4,
-	BOARD
-} Hand;
-
-TileDLLNodeDLLNode *hands = NULL;
 int game_running = 0;
+int shuflag = 0;
 
-/**
- * Returns new head
- */
-TileDLLNode* shuffle(TileDLLNode *head) {
-	int len;
+enum {
+	SHUFFLE,
+	PLAYERMOVE,
+	COMMOVE
+} turn_state = SHUFFLE;
 
-	len = Tile_dll_len(head);
-	for (int i = 0; i < len*2; i++) {
-		Tile_dll_swap_nodes(
-				Tile_dll_get_by_index(head, i%len),
-				Tile_dll_get_by_index(head, rand()%len)
-				); 
-		while (head->prev != NULL) {
-			head = head->prev;
-		}
-	}
-	return head;
-}
+extern TileDLLNodeDLLNode *hands;
 
-/**
- * @return y cursor position after the print
- */
-int print_hand(TileDLLNode *head, int y, int x) {
-	int max_x, max_y;
-	int x_start = x;
-	getmaxyx(stdscr, max_y, max_x);
-	while (head != NULL) {
-		if (y > max_y - 5) break;
-
-		head->data.x = x;
-		head->data.y = y;
-		print_tile(&(head->data));
-		
-		x += 6;
-		head = head->next;
-		if (x > max_x - 6) {
-			y += 5;
-			x = x_start;
-		}
-	}
-
-	return y;
-}
+State shuffle_game(GameData *this);
 
 void game_on_enter(FSM_State *self, const void *arg) {
 	static GameData gdata = {0, SETTINGS};
@@ -76,7 +30,7 @@ void game_on_enter(FSM_State *self, const void *arg) {
 	if (!game_running) {
 		srand (time(NULL));
 		TileDLLNode* deck = NULL;
-		Tile base_tile = {0, 0, 0, BLACK};
+		Tile base_tile = {5, 5, 3, 3, 0, BLACK};
 
 		// Head is both jockers
 		deck = Tile_create_new_node(base_tile);
@@ -92,10 +46,11 @@ void game_on_enter(FSM_State *self, const void *arg) {
 		}
 		hands = TileDLLNode_create_new_node(*deck);
 		hands->data.next->prev = NULL;
-		hands->data.next = shuffle(hands->data.next);
 
 		free(deck);
 		game_running = 1;
+		shuflag = 0;
+		turn_state = SHUFFLE;
 	}
 }
 
@@ -116,8 +71,16 @@ int game_update(FSM_State *self, struct timeval *dt) {
 	}
 	flushinp();
 	
+	if (handle_animation(dt)) {
+		return GAME;
+	}
+
 	clear_win();
-	print_hand(hands->data.next, 5, 5);
+	switch(turn_state) {
+		case SHUFFLE:
+			return shuffle_game(this);
+		default: break;
+	}
 	
 	return GAME;
 }
@@ -141,4 +104,63 @@ void game_on_exit(FSM_State *self, void **arg) {
 		default:
 			break;
 	}
+}
+
+State shuffle_game(GameData *this) {
+	struct timeval duration;
+	TileDLLNode *node;
+	if (shuflag < 1) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 2) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		place_hand(hands->data.next, 3, 5, false);
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 3) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		TileDLLNode_dll_sync(hands);
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 4) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		hands->data.next = shuffle(hands->data.next);
+		place_hand(hands->data.next, 3, 5, false);
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 5) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		TileDLLNode_dll_sync(hands);
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 6) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		node = hands->data.next;
+		for(;node!=NULL;node=node->next) {
+			node->data.x = 5;
+			node->data.y = 3;
+		}
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 7) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		TileDLLNode_dll_sync(hands);
+		start_animation(duration, animate_hands);
+		shuflag++;
+	} else if (shuflag < 7) {
+		node = hands->data.next;
+		//start_animation(duration, animate_hands);
+		shuflag++;
+	} else {
+		turn_state = (this->dificulty % 10 == 0) ? PLAYERMOVE : COMMOVE; 
+	}
+	return GAME;
 }

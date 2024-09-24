@@ -6,7 +6,9 @@
 
 typedef struct Tile {
 	int x;
+	int prevx;
 	int y;
+	int prevy;
 	int num;
 	Color color;
 } Tile;

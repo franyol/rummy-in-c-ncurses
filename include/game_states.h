@@ -2,6 +2,7 @@
 #define _GAME_STATES_H_
 
 #include "fsm.h"
+#include "tile.h"
 
 typedef enum State {
 	START_MENU,
@@ -65,5 +66,30 @@ typedef struct GameArg {
 typedef struct PauseMenuArg {
 	int dificulty;
 } PauseMenuArg;
+
+/** Game State declarations **/
+DECLARE_DOUBLE_LINKED_LIST(TileDLLNode);
+TileDLLNode* shuffle(TileDLLNode *head);
+
+typedef enum Hand {
+	DECK,
+	P1,
+	P2,
+	P3,
+	P4,
+	BOARD
+} Hand;
+
+int place_hand(TileDLLNode *head, int y, int x, int is_prev);
+
+void printw_hand(TileDLLNode *head);
+
+int animate_hands(struct timeval count, struct timeval duration);
+
+void Tile_dll_sync(TileDLLNode *head);
+
+void TileDLLNode_dll_sync(TileDLLNodeDLLNode *head);
+
+int power(int base, int ex);
 
 #endif
