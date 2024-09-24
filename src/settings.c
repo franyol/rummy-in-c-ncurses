@@ -40,7 +40,7 @@ void settings_on_enter(FSM_State *self, const void *arg) {
 	}
 }
 
-int settings_update(FSM_State *self) {
+int settings_update(FSM_State *self, struct timeval *dt) {
 	static int y=0, x=0;
 	SettingsData* this = (SettingsData*) self->data;
 

@@ -99,7 +99,7 @@ void game_on_enter(FSM_State *self, const void *arg) {
 	}
 }
 
-int game_update(FSM_State *self) {
+int game_update(FSM_State *self, struct timeval *dt) {
 	GameData* this = (GameData*) self->data;
 
 	switch(getch()) {
@@ -131,10 +131,12 @@ void game_on_exit(FSM_State *self, void **arg) {
 		case START_MENU:
 			smarg = (StartMenuArg*) malloc(sizeof(StartMenuArg));
 			smarg->dificulty = this->dificulty;
+			*arg = smarg;
 			break;
 		case PAUSE_MENU:
 			pmarg = (PauseMenuArg*) malloc(sizeof(PauseMenuArg));
 			pmarg->dificulty = this->dificulty;
+			*arg = pmarg;
 			break;
 		default:
 			break;

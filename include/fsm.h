@@ -2,6 +2,7 @@
 #define _FSM_H_
 
 #include <stdlib.h>
+#include <sys/time.h>
 #include "double_linked_lists.h"
 
 typedef struct FSM_State {
@@ -9,7 +10,7 @@ typedef struct FSM_State {
 	void *data;
 	void (*on_enter) (struct FSM_State *self, const void *arg);
 	void (*on_exit) (struct FSM_State *self, void **arg);
-	int (*update) (struct FSM_State *self);
+	int (*update) (struct FSM_State *self, struct timeval *dt);
 } FSM_State;
 
 typedef struct FSM {
@@ -18,6 +19,6 @@ typedef struct FSM {
 	ssize_t current;
 } FSM;
 
-void fsm_update(FSM *fsm);
+void fsm_update(FSM *fsm, struct timeval *dt);
 
 #endif

@@ -1,6 +1,6 @@
 #include "../include/fsm.h"
 
-void fsm_update(FSM *fsm){
+void fsm_update(FSM *fsm, struct timeval *dt){
 	ssize_t next_state;
 
 	if (fsm->len < 1) return; // No states
@@ -12,7 +12,7 @@ void fsm_update(FSM *fsm){
 		return; // State doesn't exist, do nothing
 	}
 
-	next_state = fsm->states[fsm->current].update(&fsm->states[fsm->current]);
+	next_state = fsm->states[fsm->current].update( &fsm->states[fsm->current], dt);
 
 	if (next_state != fsm->current) {
 		void *arg = NULL;

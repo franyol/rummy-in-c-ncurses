@@ -18,6 +18,8 @@ void mainLoop( int freq ) {
 
 	f.tv_sec = 1/freq;
 	f.tv_usec = (1000000/freq) % 1000000;
+	elapsed.tv_sec = 100;
+	elapsed.tv_usec = 0;
 
 	if (gettimeofday(&start, NULL) != 0) {
 		fprintf(stderr, "gettimeofday error\n");
@@ -25,7 +27,7 @@ void mainLoop( int freq ) {
 	}
 
 	for (;;) {
-		fsm_update(&fsm);
+		fsm_update(&fsm, &elapsed);
 		if (fsm.current == -1) break;
 	
 		do {

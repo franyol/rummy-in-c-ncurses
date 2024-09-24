@@ -13,7 +13,7 @@ void start_menu_on_enter(FSM_State *self, const void *arg) {
 	}
 }
 
-int start_menu_update(FSM_State *self) {
+int start_menu_update(FSM_State *self, struct timeval *dt) {
 	static int y=0, x=0;
 	StartMenuData* this = (StartMenuData*) self->data;
 

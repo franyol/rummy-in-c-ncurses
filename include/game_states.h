@@ -13,7 +13,7 @@ typedef enum State {
 #define DECLARE_STATE_CALLBACKS(name) \
 	void name##_on_enter(FSM_State* self, const void *arg); \
 	void name##_on_exit(FSM_State* self, void **arg); \
-	int name##_update(FSM_State* self); \
+	int name##_update(FSM_State* self, struct timeval *dt); \
 
 DECLARE_STATE_CALLBACKS(start_menu);
 DECLARE_STATE_CALLBACKS(game);

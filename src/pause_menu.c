@@ -13,7 +13,7 @@ void pause_menu_on_enter(FSM_State *self, const void *arg) {
 	}
 }
 
-int pause_menu_update(FSM_State *self) {
+int pause_menu_update(FSM_State *self, struct timeval *dt) {
 	static int y=0, x=0;
 	PauseMenuData* this = (PauseMenuData*) self->data;
 
