@@ -11,6 +11,7 @@ int test_data_eq(TestData a, TestData b) {
 	return (a.value == b.value);
 }
 
+DECLARE_DOUBLE_LINKED_LIST(TestData);
 DEFINE_DOUBLE_LINKED_LIST(TestData);
 
 void printList(TestDataDLLNode* head) {

@@ -2,6 +2,8 @@
 
 #include <ncurses.h>
 
+DEFINE_DOUBLE_LINKED_LIST(Tile);
+
 const char tileframe[5][7] = {
 " ---- ",
 "|    |",
@@ -9,6 +11,14 @@ const char tileframe[5][7] = {
 "|    |",
 " ---- ",
 };
+
+void print_empty_tile(int y, int x) {
+	attrset(A_NORMAL | COLOR_PAIR(BLACK) | A_BOLD);
+	for (int i=0; i < 5; i++) {
+		move(y+i, x);
+		printw("%s", tileframe[i]);
+	}
+}
 
 void print_tile(const Tile* tile) {
 	attrset(A_NORMAL | COLOR_PAIR(tile->color) | A_BOLD);

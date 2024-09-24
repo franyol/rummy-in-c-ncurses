@@ -8,9 +8,11 @@
 
 void mainLoop( int freq ) {
 	struct timeval elapsed, f, start, end;
-	FSM_State states[2] = {
+	FSM_State states[] = {
 	{START_MENU, NULL, start_menu_on_enter, start_menu_on_exit, start_menu_update},
-	{SETTINGS, NULL, settings_on_enter, settings_on_exit, settings_update}
+	{SETTINGS, NULL, settings_on_enter, settings_on_exit, settings_update},
+	{GAME, NULL, game_on_enter, game_on_exit, game_update},
+	{PAUSE_MENU, NULL, pause_menu_on_enter, pause_menu_on_exit, pause_menu_update}
 	};
 	FSM fsm = {states, sizeof(states)/sizeof(FSM_State), -1};
 

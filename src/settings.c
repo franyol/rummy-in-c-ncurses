@@ -27,11 +27,15 @@ void print_dificulty(int y, int x, int dificulty) {
 
 void settings_on_enter(FSM_State *self, const void *arg) {
 	static char *options[] = {"player 1", "player 2", "player 3", "player 4", "done"};
-	static SettingsData sdata = {options, 5, 0, 0};
+	SettingsArg *sarg;
+		
+	static SettingsData sdata = {options, 5, 0, 0, START_MENU};
 	if (self->data == NULL) self->data = (void*) &sdata;
 
 	if (arg != NULL) {
-		sdata.dificulty = ((SettingsArg*) arg)->dificulty;
+		sarg = ((SettingsArg*) arg);
+		sdata.dificulty = sarg->dificulty;
+		sdata.fromState = sarg->fromState;
 		free((SettingsArg*) arg);
 	}
 }
@@ -62,7 +66,7 @@ int settings_update(FSM_State *self) {
 					break;
 				case 4:
 					erase_options(y, x, this->len);
-					return START_MENU;
+					return this->fromState;
 				default:
 					break;
 			}

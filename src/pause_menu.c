@@ -2,20 +2,20 @@
 #include "../include/print_utils.h"
 #include <ncurses.h>
 
-void start_menu_on_enter(FSM_State *self, const void *arg) {
-	static char *options[] = {"play", "settings", "quit"};
-	static StartMenuData smdata = {options, 3, 0, 1110, GAME};
-	if (self->data == NULL) self->data = (void*) &smdata;
+void pause_menu_on_enter(FSM_State *self, const void *arg) {
+	static char *options[] = {"continue", "settings", "quit"};
+	static PauseMenuData pmdata = {options, 3, 0, 1110, GAME};
+	if (self->data == NULL) self->data = (void*) &pmdata;
 
 	if (arg != NULL) {
-		smdata.dificulty = ((StartMenuArg*) arg)->dificulty;
-		free((StartMenuArg*) arg);
+		pmdata.dificulty = ((PauseMenuArg*) arg)->dificulty;
+		free((PauseMenuArg*) arg);
 	}
 }
 
-int start_menu_update(FSM_State *self) {
+int pause_menu_update(FSM_State *self) {
 	static int y=0, x=0;
-	StartMenuData* this = (StartMenuData*) self->data;
+	PauseMenuData* this = (PauseMenuData*) self->data;
 
 	switch(getch()) {
 		case KEY_DOWN:
@@ -49,10 +49,10 @@ int start_menu_update(FSM_State *self) {
 	getmaxyx(stdscr, y, x);
 	print_options(y, x, this->len, this->index, this->options);
 
-	return START_MENU;
+	return PAUSE_MENU;
 }
 
-void start_menu_on_exit(FSM_State *self, void **arg) {
+void pause_menu_on_exit(FSM_State *self, void **arg) {
 	StartMenuData *this = (StartMenuData*) self->data;
 	SettingsArg* seta; 
 	GameArg* gamea;
@@ -66,7 +66,7 @@ void start_menu_on_exit(FSM_State *self, void **arg) {
 		case SETTINGS:
 			seta = malloc(sizeof(SettingsArg));
 			seta->dificulty = this->dificulty;
-			seta->fromState = START_MENU;
+			seta->fromState = PAUSE_MENU;
 			*arg = (void*) seta;
 			break;
 		default:

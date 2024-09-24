@@ -28,12 +28,26 @@ typedef struct StartMenuData {
 	State toState;
 } StartMenuData;
 
+typedef struct PauseMenuData {
+	char **options;
+	int len;
+	int index;
+	int dificulty;
+	State toState;
+} PauseMenuData;
+
 typedef struct SettingsData {
 	char **options;
 	int len;
 	int index;
 	int dificulty;
+	State fromState;
 } SettingsData;
+
+typedef struct GameData {
+	int dificulty;
+	State toState;
+} GameData;
 
 typedef struct StartMenuArg {
 	int dificulty;
@@ -41,6 +55,7 @@ typedef struct StartMenuArg {
 
 typedef struct SettingsArg {
 	int dificulty;
+	State fromState;
 } SettingsArg;
 
 typedef struct GameArg {

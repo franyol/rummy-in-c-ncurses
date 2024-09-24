@@ -1,12 +1,33 @@
 #ifndef _DOUBLE_LINKED_LISTS_H_
 #define _DOUBLE_LINKED_LISTS_H_
 
-#define DEFINE_DOUBLE_LINKED_LIST(type)                               \
+#include <stdlib.h>
+
+#define DECLARE_DOUBLE_LINKED_LIST(type) \
     typedef struct type##DLLNode {                                    \
         type data;                                                    \
         struct type##DLLNode *next;                                   \
         struct type##DLLNode *prev;                                   \
     } type##DLLNode;                                                  \
+                                                                      \
+    void type##_dll_append(type##DLLNode *head, type##DLLNode *new_node); \
+                                                                      \
+    void type##_dll_insert_after(type##DLLNode *node, type##DLLNode *new_node); \
+                                                                      \
+    void type##_dll_swap_nodes(type##DLLNode *n1, type##DLLNode *n2); \
+                                                                      \
+    void type##_pop_from_list(type##DLLNode *node);                   \
+																	  \
+	void type##_free_all(type##DLLNode *head);						  \
+                                                                      \
+    type##DLLNode* type##_create_new_node(type data);				  \
+																	  \
+	int type##_dll_len(type##DLLNode *head);                          \
+                                                                      \
+	type##DLLNode* type##_dll_get_by_index(type##DLLNode *head, int idx);
+
+
+#define DEFINE_DOUBLE_LINKED_LIST(type)                               \
                                                                       \
     void type##_dll_append(type##DLLNode *head, type##DLLNode *new_node) { \
         while ( head->next != NULL ) head = head->next;               \
@@ -63,11 +84,26 @@
 	}                                                                 \
                                                                       \
     type##DLLNode* type##_create_new_node(type data) {                \
-        type##DLLNode* new_node = malloc(sizeof(type##DLLNode));      \
+        type##DLLNode* new_node = (type##DLLNode*) malloc(sizeof(type##DLLNode));      \
         new_node->data = data;                                        \
         new_node->prev = NULL;                                        \
         new_node->next = NULL;                                        \
         return new_node;                                              \
-    }
+    }																  \
+																	  \
+	int type##_dll_len(type##DLLNode *head) {						  \
+		int count = 0;                                                \
+		while (head != NULL) {                                        \
+			count++; head = head->next;                               \
+		}                                                             \
+		return count;                                                 \
+	}\
+ \
+	type##DLLNode* type##_dll_get_by_index(type##DLLNode *head, int idx) { \
+		for (int i = 0; i < idx; i++, head = head->next) { \
+			if ( head->next == NULL ) break; \
+		} \
+		return head; \
+	} 
 
 #endif

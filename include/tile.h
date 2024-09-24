@@ -2,6 +2,7 @@
 #define _TILE_H_
 
 #include "../include/colors.h"
+#include "../include/double_linked_lists.h"
 
 typedef struct Tile {
 	int x;
@@ -9,6 +10,8 @@ typedef struct Tile {
 	int num;
 	Color color;
 } Tile;
+
+DECLARE_DOUBLE_LINKED_LIST(Tile);
 
 /**
  *	Prints tile to screen
