@@ -62,6 +62,7 @@ int game_update(FSM_State *self, struct timeval *dt) {
 		case 'q':
 			clear_win();
 			this->toState = START_MENU;
+			game_running = 0;
 			return START_MENU;
 		case 'p':
 			clear_win();
@@ -92,8 +93,16 @@ int game_update(FSM_State *self, struct timeval *dt) {
 
 void game_on_exit(FSM_State *self, void **arg) {
 	GameData* this = (GameData*) self->data;
+	TileDLLNodeDLLNode *node;
 	StartMenuArg* smarg;
 	PauseMenuArg* pmarg;
+
+	if (!game_running) {
+		for (node=hands;node!=NULL;node=node->next) {
+			Tile_free_all(node->data.next);
+		}
+		TileDLLNode_free_all(node);
+	}
 
 	switch(this->toState) {
 		case START_MENU:
