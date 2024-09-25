@@ -20,6 +20,8 @@ DECLARE_DOUBLE_LINKED_LIST(Tile);
  */
 void print_tile(const Tile* tile);
 
+void print_empty_tile(int y, int x);
+
 /**
  *	Erases tile from screen
  */

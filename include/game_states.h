@@ -68,6 +68,9 @@ typedef struct PauseMenuArg {
 } PauseMenuArg;
 
 /** Game State declarations **/
+
+#define GET_HAND(hand) TileDLLNode_dll_get_by_index(hands, hand)->data.next
+
 DECLARE_DOUBLE_LINKED_LIST(TileDLLNode);
 TileDLLNode* shuffle(TileDLLNode *head);
 
@@ -85,6 +88,7 @@ int place_hand(TileDLLNode *head, int y, int x, int is_prev);
 void printw_hand(TileDLLNode *head);
 
 int animate_hands(struct timeval count, struct timeval duration);
+int animate_board(struct timeval count, struct timeval duration);
 
 void Tile_dll_sync(TileDLLNode *head);
 

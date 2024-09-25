@@ -7,6 +7,12 @@
 DEFINE_DOUBLE_LINKED_LIST(TileDLLNode);
 
 TileDLLNodeDLLNode *hands = NULL;
+Hand cur_player = P1;
+extern enum {
+	SHUFFLE,
+	PLAYERMOVE,
+	COMMOVE
+} turn_state;
 
 /**
  * Returns new head
@@ -63,6 +69,40 @@ void printw_hand(TileDLLNode *head) {
 		if (node->data.y > max_y - 5) continue;
 		print_tile(&(node->data));
 	}
+}
+
+int animate_board(struct timeval count, struct timeval duration) {
+	float percent = (float) 100 * (count.tv_sec*1000000 + count.tv_usec) / 
+		(duration.tv_sec*1000000 + duration.tv_usec);
+
+	TileDLLNode *node;
+	TileDLLNodeDLLNode *hand;
+	Tile mockTile = {0, 0, 0, 0, 0, BLACK};
+	clear_win();
+	for (node = GET_HAND(cur_player); node != NULL; node = node->next) {
+		if (turn_state == PLAYERMOVE) {
+			mockTile.num = node->data.num;
+			mockTile.color = node->data.color;
+		}
+		mockTile.x = node->data.prevx + (node->data.x - node->data.prevx)*percent/100;
+		mockTile.y = node->data.prevy + (node->data.y - node->data.prevy)*percent/100;
+		if (turn_state == PLAYERMOVE) {
+			print_tile(&mockTile);
+		} else {
+			print_empty_tile(mockTile.y, mockTile.x);	
+		}
+	}
+
+	for (hand = TileDLLNode_dll_get_by_index(hands, BOARD); hand != NULL; hand = hand->next) {
+		for (node = hand->data.next; node != NULL; node = node->next) {
+			mockTile.num = node->data.num;
+			mockTile.color = node->data.color;
+			mockTile.x = node->data.prevx + (node->data.x - node->data.prevx)*percent/100;
+			mockTile.y = node->data.prevy + (node->data.y - node->data.prevy)*percent/100;
+			print_tile(&mockTile);
+		}
+	}
+	return 1;
 }
 
 int animate_hands(struct timeval count, struct timeval duration) {

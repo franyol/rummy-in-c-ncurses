@@ -15,6 +15,7 @@ enum {
 } turn_state = SHUFFLE;
 
 extern TileDLLNodeDLLNode *hands;
+extern Hand cur_player;
 
 State shuffle_game(GameData *this);
 
@@ -79,7 +80,10 @@ int game_update(FSM_State *self, struct timeval *dt) {
 	switch(turn_state) {
 		case SHUFFLE:
 			return shuffle_game(this);
-		default: break;
+		default:
+			place_hand(GET_HAND(cur_player), 3, 5, false);
+			printw_hand(GET_HAND(cur_player));
+			break;
 	}
 	
 	return GAME;
@@ -130,7 +134,7 @@ State shuffle_game(GameData *this) {
 		duration.tv_sec = 1;
 		duration.tv_usec = 0;
 		hands->data.next = shuffle(hands->data.next);
-		place_hand(hands->data.next, 3, 5, false);
+		place_hand(GET_HAND(DECK), 3, 5, false);
 		start_animation(duration, animate_hands);
 		shuflag++;
 	} else if (shuflag < 5) {
@@ -142,7 +146,7 @@ State shuffle_game(GameData *this) {
 	} else if (shuflag < 6) {
 		duration.tv_sec = 1;
 		duration.tv_usec = 0;
-		node = hands->data.next;
+		node = GET_HAND(DECK);
 		for(;node!=NULL;node=node->next) {
 			node->data.x = 5;
 			node->data.y = 3;
@@ -155,9 +159,32 @@ State shuffle_game(GameData *this) {
 		TileDLLNode_dll_sync(hands);
 		start_animation(duration, animate_hands);
 		shuflag++;
-	} else if (shuflag < 7) {
-		node = hands->data.next;
-		//start_animation(duration, animate_hands);
+	} else if (shuflag < 8) {
+		duration.tv_sec = 1;
+		duration.tv_usec = 0;
+		Tile temp = {0, 0, 0, 0, 0, BLACK};
+		TileDLLNode *draw, *head;
+		for (Hand i=P1; i <= P4; i++) {
+			head = Tile_create_new_node(temp);
+			for (int j=0; j < 14; j++) {
+				draw = Tile_dll_get_by_index(GET_HAND(DECK),
+						rand() % Tile_dll_len(GET_HAND(DECK)));
+				if (draw->prev == NULL) GET_HAND(DECK) = draw->next;
+				Tile_pop_from_list(draw);
+				Tile_dll_append(head, draw);
+			}
+			head->next->prev = NULL;
+			TileDLLNode_dll_append(hands, TileDLLNode_create_new_node(*head));
+			free(head);
+		}
+		// Init board
+		draw = Tile_create_new_node(temp);
+		TileDLLNode_dll_append(hands, TileDLLNode_create_new_node(*draw));
+		free(draw);
+		
+		place_hand(GET_HAND(cur_player), 3, 5, false);
+		start_animation(duration, animate_board);
+		turn_state = (this->dificulty % 10 == 0) ? PLAYERMOVE : COMMOVE; 
 		shuflag++;
 	} else {
 		turn_state = (this->dificulty % 10 == 0) ? PLAYERMOVE : COMMOVE; 
