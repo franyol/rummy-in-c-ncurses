@@ -113,7 +113,7 @@ int game_update(FSM_State *self, struct timeval *dt) {
 			return shuffle_game(this);
 		case TURN_CHANGE:
 			getmaxyx(stdscr, y, x);
-			mvprintw(y/2-3, x/2-10, "Is Player %d's turn!", (cur_player - P1+1)); 
+			mvprintw(y/2-3, x/2-10, "It's Player %d's turn!", (cur_player - P1+1)); 
 			mvprintw(y/2-1, x/2-12, "Press Enter to continue"); 
 			if (select_press) turn_state = 
 				(get_dificulty(this->dificulty, cur_player) == 0) ? PLAYERMOVE : COMMOVE;
