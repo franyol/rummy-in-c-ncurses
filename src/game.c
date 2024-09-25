@@ -11,7 +11,8 @@ int shuflag = 0;
 enum {
 	SHUFFLE,
 	PLAYERMOVE,
-	COMMOVE
+	COMMOVE,
+	TURN_CHANGE
 } turn_state = SHUFFLE;
 
 extern TileDLLNodeDLLNode *hands;
@@ -31,7 +32,7 @@ void game_on_enter(FSM_State *self, const void *arg) {
 	if (!game_running) {
 		srand (time(NULL));
 		TileDLLNode* deck = NULL;
-		Tile base_tile = {5, 5, 3, 3, 0, BLACK};
+		Tile base_tile = {17, 17, 3, 3, 0, BLACK};
 
 		// Head is both jockers
 		deck = Tile_create_new_node(base_tile);
@@ -57,6 +58,15 @@ void game_on_enter(FSM_State *self, const void *arg) {
 
 int game_update(FSM_State *self, struct timeval *dt) {
 	GameData* this = (GameData*) self->data;
+	int x, y;
+	int up_press = 0;
+	int down_press = 0;
+	int right_press = 0;
+	int left_press = 0;
+	int select_press = 0;
+	int next_turn_press = 0;
+	int draw_tile_press = 0;
+	int restart_turn_press = 0;
 
 	switch(getch()) {
 		case 'q':
@@ -68,6 +78,26 @@ int game_update(FSM_State *self, struct timeval *dt) {
 			clear_win();
 			this->toState = PAUSE_MENU;
 			return PAUSE_MENU;
+		case KEY_UP:
+		case 'w':
+			up_press = 1;
+			break;
+		case KEY_DOWN:
+		case 's':
+			down_press = 1;
+			break;
+		case KEY_RIGHT:
+		case 'd':
+			right_press = 1;
+			break;
+		case KEY_LEFT:
+		case 'a':
+			left_press = 1;
+			break;
+		case '\n':
+		case ' ':
+			select_press = 1;
+			break;
 		default:
 			break;
 	}
@@ -81,6 +111,13 @@ int game_update(FSM_State *self, struct timeval *dt) {
 	switch(turn_state) {
 		case SHUFFLE:
 			return shuffle_game(this);
+		case TURN_CHANGE:
+			getmaxyx(stdscr, y, x);
+			mvprintw(y/2-3, x/2-10, "Is Player %d's turn!", (cur_player - P1+1)); 
+			mvprintw(y/2-1, x/2-12, "Press Enter to continue"); 
+			if (select_press) turn_state = 
+				(get_dificulty(this->dificulty, cur_player) == 0) ? PLAYERMOVE : COMMOVE;
+			return GAME;
 		default:
 			place_board(TileDLLNode_dll_get_by_index(hands, BOARD));
 			break;
@@ -178,12 +215,12 @@ State shuffle_game(GameData *this) {
 		TileDLLNode_dll_append(hands, TileDLLNode_create_new_node(*draw));
 		free(draw);
 		
-		place_hand(GET_HAND(cur_player), 3, 17, false);
+		place_board(TileDLLNode_dll_get_by_index(hands, BOARD));
 		start_animation(duration, animate_board);
-		turn_state = (this->dificulty % 10 == 0) ? PLAYERMOVE : COMMOVE; 
+		turn_state = TURN_CHANGE;
 		shuflag++;
 	} else {
-		turn_state = (this->dificulty % 10 == 0) ? PLAYERMOVE : COMMOVE; 
+		turn_state = TURN_CHANGE;
 	}
 	return GAME;
 }

@@ -12,4 +12,6 @@ int handle_animation(const struct timeval *dt);
 void start_animation(struct timeval duration, int (*anim)
 		(struct timeval count, struct timeval duration));
 
+void printw_delimiters(int horizontal, int y, int x);
+
 #endif

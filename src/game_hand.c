@@ -6,6 +6,8 @@
 
 DEFINE_DOUBLE_LINKED_LIST(TileDLLNode);
 
+int ydel = 3;
+
 TileDLLNodeDLLNode *hands = NULL;
 Hand cur_player = P1;
 extern enum {
@@ -58,7 +60,7 @@ int place_hand(TileDLLNode *head, int y, int x, int is_prev) {
 		}
 	}
 
-	return y;
+	return y+5;
 }
 
 void printw_hand_hidden(TileDLLNode *head) {
@@ -75,6 +77,7 @@ void place_board(TileDLLNodeDLLNode *board_index) {
 	TileDLLNodeDLLNode *hand;
 	int cur_y;
 	cur_y = place_hand(GET_HAND(cur_player), 3, 17 ,false);
+	ydel = cur_y;
 	cur_y += 3;
 
 	hand = board_index;
@@ -85,6 +88,10 @@ void place_board(TileDLLNodeDLLNode *board_index) {
 
 void printw_board() {
 	TileDLLNodeDLLNode *hand;
+
+	printw_delimiters(0, 3, 16);
+	printw_delimiters(1, ydel, 0);
+
 	if (turn_state == PLAYERMOVE) {
 		printw_hand(GET_HAND(cur_player));
 	} else {
@@ -108,6 +115,7 @@ void printw_hand(TileDLLNode *head) {
 }
 
 int animate_board(struct timeval count, struct timeval duration) {
+	int maxx, maxy;
 	float percent = (float) 100 * (count.tv_sec*1000000 + count.tv_usec) / 
 		(duration.tv_sec*1000000 + duration.tv_usec);
 
@@ -115,6 +123,11 @@ int animate_board(struct timeval count, struct timeval duration) {
 	TileDLLNodeDLLNode *hand;
 	Tile mockTile = {0, 0, 0, 0, 0, BLACK};
 	clear_win();
+	getmaxyx(stdscr, maxy, maxx);
+
+	printw_delimiters(0, 3, 16);
+	printw_delimiters(1, ydel, 0);
+
 	for (node = GET_HAND(cur_player); node != NULL; node = node->next) {
 		if (turn_state == PLAYERMOVE) {
 			mockTile.num = node->data.num;
@@ -122,6 +135,7 @@ int animate_board(struct timeval count, struct timeval duration) {
 		}
 		mockTile.x = node->data.prevx + (node->data.x - node->data.prevx)*percent/100;
 		mockTile.y = node->data.prevy + (node->data.y - node->data.prevy)*percent/100;
+		if (mockTile.x > maxx - 5 || mockTile.y > maxy - 6) continue;
 		if (turn_state == PLAYERMOVE) {
 			print_tile(&mockTile);
 		} else {
@@ -142,17 +156,20 @@ int animate_board(struct timeval count, struct timeval duration) {
 }
 
 int animate_hands(struct timeval count, struct timeval duration) {
+	int maxx, maxy;
 	float percent = (float) 100 * (count.tv_sec*1000000 + count.tv_usec) / 
 		(duration.tv_sec*1000000 + duration.tv_usec);
 
 	TileDLLNode *node;
 	Tile mockTile = {0, 0, 0, 0, 0, BLACK};
 	clear_win();
+	getmaxyx(stdscr, maxy, maxx);
 	for (node = hands->data.next; node != NULL; node = node->next) {
 		mockTile.num = node->data.num;
 		mockTile.color = node->data.color;
 		mockTile.x = node->data.prevx + (node->data.x - node->data.prevx)*percent/100;
 		mockTile.y = node->data.prevy + (node->data.y - node->data.prevy)*percent/100;
+		if (mockTile.x > maxx - 5 || mockTile.y > maxy - 6) continue;
 		print_tile(&mockTile);
 	}
 	return 1;
@@ -171,4 +188,8 @@ void TileDLLNode_dll_sync(TileDLLNodeDLLNode *head) {
 	for (node=head;node!=NULL;node=node->next) {
 		Tile_dll_sync(node->data.next);
 	}
+}
+
+int get_dificulty(int dificulty, Hand player) {
+	return (int) dificulty/power(10,player - P1) % 10;
 }

@@ -98,5 +98,6 @@ void Tile_dll_sync(TileDLLNode *head);
 void TileDLLNode_dll_sync(TileDLLNodeDLLNode *head);
 
 int power(int base, int ex);
+int get_dificulty(int dificulty, Hand player);
 
 #endif

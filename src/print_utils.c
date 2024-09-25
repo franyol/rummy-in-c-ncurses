@@ -12,6 +12,22 @@ void clear_win(void) {
 	}
 }
 
+void printw_delimiters(int horizontal, int y, int x) {
+	int max;
+
+	if (horizontal) {
+		max = getmaxx(stdscr);
+		for (int i = x; i < max; i++) {
+			mvprintw(y, i, "_");
+		}
+	} else {
+		max = getmaxy(stdscr);
+		for (int i = y; i < max; i++) {
+			mvprintw(i, x, "|");
+		}
+	}
+}
+
 void erase_options(int y, int x, int len) {
 	attrset(A_NORMAL | COLOR_PAIR(BLACK));
 	for (int i=0; i<len; i++) {
