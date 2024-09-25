@@ -86,6 +86,9 @@ typedef enum Hand {
 int place_hand(TileDLLNode *head, int y, int x, int is_prev);
 
 void printw_hand(TileDLLNode *head);
+void printw_hand_hidden(TileDLLNode *head);
+void printw_board();
+void place_board(TileDLLNodeDLLNode *board_index);
 
 int animate_hands(struct timeval count, struct timeval duration);
 int animate_board(struct timeval count, struct timeval duration);

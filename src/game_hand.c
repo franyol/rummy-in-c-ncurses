@@ -61,6 +61,42 @@ int place_hand(TileDLLNode *head, int y, int x, int is_prev) {
 	return y;
 }
 
+void printw_hand_hidden(TileDLLNode *head) {
+	int max_y;
+	TileDLLNode* node;
+	max_y = getmaxy(stdscr);
+	for (node = head; node != NULL; node = node->next) {
+		if (node->data.y > max_y - 5) continue;
+		print_empty_tile(node->data.y, node->data.x);
+	}
+}
+
+void place_board(TileDLLNodeDLLNode *board_index) {
+	TileDLLNodeDLLNode *hand;
+	int cur_y;
+	cur_y = place_hand(GET_HAND(cur_player), 3, 17 ,false);
+	cur_y += 3;
+
+	hand = board_index;
+	for(;hand!=NULL;hand=hand->next) {
+		cur_y = place_hand(hand->data.next, cur_y, 17, false);
+	}
+}
+
+void printw_board() {
+	TileDLLNodeDLLNode *hand;
+	if (turn_state == PLAYERMOVE) {
+		printw_hand(GET_HAND(cur_player));
+	} else {
+		printw_hand_hidden(GET_HAND(cur_player));
+	}
+
+	hand = TileDLLNode_dll_get_by_index(hands, BOARD);
+	for(;hand!=NULL;hand=hand->next) {
+		printw_hand(hand->data.next);
+	}
+}
+
 void printw_hand(TileDLLNode *head) {
 	int max_y;
 	TileDLLNode* node;
