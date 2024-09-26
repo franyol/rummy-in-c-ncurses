@@ -24,6 +24,8 @@
 																	  \
 	int type##_dll_len(type##DLLNode *head);                          \
                                                                       \
+	int type##_dll_idx(type##DLLNode *node); 						  \
+                                                                      \
 	type##DLLNode* type##_dll_get_by_index(type##DLLNode *head, int idx);
 
 
@@ -90,6 +92,14 @@
         new_node->next = NULL;                                        \
         return new_node;                                              \
     }																  \
+                                                                      \
+	int type##_dll_idx(type##DLLNode *node) {						  \
+		int count = 0;                                                \
+		while (node != NULL && node->prev != NULL) {                  \
+			count++; node = node->prev;                               \
+		}                                                             \
+		return count;                                                 \
+	}\
 																	  \
 	int type##_dll_len(type##DLLNode *head) {						  \
 		int count = 0;                                                \
@@ -101,7 +111,7 @@
  \
 	type##DLLNode* type##_dll_get_by_index(type##DLLNode *head, int idx) { \
 		for (int i = 0; i < idx; i++, head = head->next) { \
-			if ( head->next == NULL ) break; \
+			if ( head == NULL || head->next == NULL ) break; \
 		} \
 		return head; \
 	} 
@@ -115,23 +125,24 @@ typedef struct NodeState {
 DECLARE_DOUBLE_LINKED_LIST(NodeState);
 
 #define dll_save_state(type, head, dest) \
-	type *node; \
+	type *_node; \
 	NodeState temp = {(void*) head, (void*) head->prev, (void*) head->next}; \
-    dest = NodeState_create_new_node(temp) \
-	for (node=head->next; node != NULL; node=node->next) { \
-		temp.who = (void*) node; \
-		temp.prev = (void*) node->prev; \
-		temp.next = (void*) node->next; \
-		NodeState_dll_append(dest, NodeState_create_new_node(temp); \
+	NodeState_free_all(dest); \
+    dest = NodeState_create_new_node(temp); \
+	for (_node=head->next; _node != NULL; _node=_node->next) { \
+		temp.who = (void*) _node; \
+		temp.prev = (void*) _node->prev; \
+		temp.next = (void*) _node->next; \
+		NodeState_dll_append(dest, NodeState_create_new_node(temp)); \
 	}
 
 #define dll_load_state(type, src) \
-	type *node; \
-	NodeStateDLLNode *srcnode = src; \
-	for (srcnode = src; srcnode != NULL; srcnode = srcnode->next) { \
-		node = (type*) srcnode->who; \
-		node->who->next = (type*) srcnode->next; \
-		node->who->prev = (type*) srcnode->prev; \
+	type *_node; \
+	NodeStateDLLNode *src_node = src; \
+	for (src_node = src; src_node != NULL; src_node = src_node->next) { \
+		_node = (type*) src_node->data.who; \
+		_node->next = (type*) src_node->data.next; \
+		_node->prev = (type*) src_node->data.prev; \
 	}
 
 #endif

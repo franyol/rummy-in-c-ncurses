@@ -7,6 +7,7 @@
 DEFINE_DOUBLE_LINKED_LIST(TileDLLNode);
 
 int ydel = 3;
+Hand board_index = BOARD;
 
 TileDLLNodeDLLNode *hands = NULL;
 Hand cur_player = P1;
@@ -73,14 +74,14 @@ void printw_hand_hidden(TileDLLNode *head) {
 	}
 }
 
-void place_board(TileDLLNodeDLLNode *board_index) {
+void place_board() {
 	TileDLLNodeDLLNode *hand;
 	int cur_y;
 	cur_y = place_hand(GET_HAND(cur_player), 3, 17 ,false);
 	ydel = cur_y;
 	cur_y += 3;
 
-	hand = board_index;
+	hand = TileDLLNode_dll_get_by_index(hands, board_index);
 	for(;hand!=NULL;hand=hand->next) {
 		cur_y = place_hand(hand->data.next, cur_y, 17, false);
 	}
@@ -98,7 +99,7 @@ void printw_board() {
 		printw_hand_hidden(GET_HAND(cur_player));
 	}
 
-	hand = TileDLLNode_dll_get_by_index(hands, BOARD);
+	hand = TileDLLNode_dll_get_by_index(hands, board_index);
 	for(;hand!=NULL;hand=hand->next) {
 		printw_hand(hand->data.next);
 	}
@@ -143,7 +144,7 @@ int animate_board(struct timeval count, struct timeval duration) {
 		}
 	}
 
-	for (hand = TileDLLNode_dll_get_by_index(hands, BOARD); hand != NULL; hand = hand->next) {
+	for (hand = TileDLLNode_dll_get_by_index(hands, board_index); hand != NULL; hand = hand->next) {
 		for (node = hand->data.next; node != NULL; node = node->next) {
 			mockTile.num = node->data.num;
 			mockTile.color = node->data.color;

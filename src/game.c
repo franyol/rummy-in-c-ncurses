@@ -5,8 +5,16 @@
 #include <time.h>
 #include <ncurses.h>
 
+extern Hand board_index;
 int game_running = 0;
 int shuflag = 0;
+
+TileDLLNode *selectedTile;
+int grabbed = 0;
+int on_player_hand = 1;
+
+NodeStateDLLNode *(saved_states[30]);
+int len_saved_states = 0;
 
 enum {
 	SHUFFLE,
@@ -19,6 +27,12 @@ extern TileDLLNodeDLLNode *hands;
 extern Hand cur_player;
 
 State shuffle_game(GameData *this);
+
+void save_hands_state(void);
+void load_hands_state(void);
+
+void handle_down_press(void);
+void handle_up_press(void);
 
 void game_on_enter(FSM_State *self, const void *arg) {
 	static GameData gdata = {0, SETTINGS};
@@ -67,6 +81,7 @@ int game_update(FSM_State *self, struct timeval *dt) {
 	int next_turn_press = 0;
 	int draw_tile_press = 0;
 	int restart_turn_press = 0;
+	int save_state_press = 0;
 
 	switch(getch()) {
 		case 'q':
@@ -98,6 +113,12 @@ int game_update(FSM_State *self, struct timeval *dt) {
 		case ' ':
 			select_press = 1;
 			break;
+		case 'r':
+			restart_turn_press = 1;
+			break;
+		case 't':
+			save_state_press = 1;
+			break;
 		default:
 			break;
 	}
@@ -114,12 +135,58 @@ int game_update(FSM_State *self, struct timeval *dt) {
 		case TURN_CHANGE:
 			getmaxyx(stdscr, y, x);
 			mvprintw(y/2-3, x/2-10, "It's Player %d's turn!", (cur_player - P1+1)); 
-			mvprintw(y/2-1, x/2-12, "Press Enter to continue"); 
-			if (select_press) turn_state = 
+			mvprintw(y/2-1, x/2-11, "Press Enter to continue"); 
+			if (select_press) {
+				turn_state = 
 				(get_dificulty(this->dificulty, cur_player) == 0) ? PLAYERMOVE : COMMOVE;
+				selectedTile = GET_HAND(cur_player);
+				on_player_hand = 1;
+				save_hands_state();
+			}
+			return GAME;
+		case PLAYERMOVE:
+			if (selectedTile != NULL && right_press && selectedTile->next != NULL) {
+				if (grabbed) {
+					if (selectedTile->prev == NULL
+							&& selectedTile->next != NULL){
+						GET_HAND((on_player_hand) ? cur_player : board_index) =
+							selectedTile->next;
+					}
+					Tile_dll_swap_nodes(selectedTile, selectedTile->next);
+				} else
+					selectedTile = selectedTile->next; 
+			} else if (selectedTile != NULL && left_press && selectedTile->prev != NULL) {
+				if (grabbed) {
+					if (selectedTile->prev != NULL 
+							&& selectedTile->prev->prev == NULL) {
+						GET_HAND((on_player_hand) ? cur_player : board_index) = 
+							selectedTile;
+					}
+						
+					Tile_dll_swap_nodes(selectedTile, selectedTile->prev);
+				} else
+					selectedTile = selectedTile->prev; 
+			} else if (down_press) {
+				handle_down_press();
+			} else if (up_press) {
+				handle_up_press();
+			} else if (select_press) {
+				grabbed = (grabbed) ? 0 : 1;
+			} else if (restart_turn_press) {
+				load_hands_state();
+			} else if (save_state_press) {
+				save_hands_state();
+			}
+			place_board();
+			if (selectedTile != NULL ) {
+				selectedTile->data.y--;
+				if (grabbed) {selectedTile->data.x-=2; selectedTile->data.y--;}
+			}
+			printw_board();
+			
 			return GAME;
 		default:
-			place_board(TileDLLNode_dll_get_by_index(hands, BOARD));
+			place_board();
 			break;
 	}
 
@@ -215,7 +282,7 @@ State shuffle_game(GameData *this) {
 		TileDLLNode_dll_append(hands, TileDLLNode_create_new_node(*draw));
 		free(draw);
 		
-		place_board(TileDLLNode_dll_get_by_index(hands, BOARD));
+		place_board();
 		start_animation(duration, animate_board);
 		turn_state = TURN_CHANGE;
 		shuflag++;
@@ -223,4 +290,99 @@ State shuffle_game(GameData *this) {
 		turn_state = TURN_CHANGE;
 	}
 	return GAME;
+}
+
+void save_hands_state(void) {
+	TileDLLNodeDLLNode *hand;
+	int i = 0;
+	for (hand=hands; hand!=NULL; hand=hand->next, i++) {
+		dll_save_state(TileDLLNode, hand->data.next, saved_states[i]);
+		hand->data.prev = hand->data.next;
+	}
+	len_saved_states = i;
+}
+
+void load_hands_state(void) {
+	TileDLLNodeDLLNode *hand;
+	int i = 0;
+	for (hand=hands; hand!=NULL && i<len_saved_states; hand=hand->next, i++) {
+		dll_load_state(TileDLLNode, saved_states[i]);
+		hand->data.next = hand->data.prev;
+	}
+}
+
+void handle_down_press(void) {
+	if (on_player_hand) {
+		on_player_hand = 0;
+		if (!grabbed)
+			selectedTile = Tile_dll_get_by_index(
+					GET_HAND(board_index), Tile_dll_idx(selectedTile));
+		else if (selectedTile != NULL) {
+			if (selectedTile->prev == NULL)
+				GET_HAND(cur_player) = selectedTile->next;
+			Tile_pop_from_list(selectedTile);
+			Tile_dll_append(
+					&(TileDLLNode_dll_get_by_index(hands,board_index)->data),
+					selectedTile);
+			GET_HAND(board_index)->prev = NULL;
+		}
+	} else if ((int) board_index < TileDLLNode_dll_len(hands)-1) {
+		board_index++;
+		if (!grabbed)
+			selectedTile = Tile_dll_get_by_index(
+					GET_HAND(board_index), Tile_dll_idx(selectedTile));
+		else if (selectedTile != NULL) {
+			if (selectedTile->prev == NULL)
+				GET_HAND(board_index-1) = selectedTile->next;
+			Tile_pop_from_list(selectedTile);
+			Tile_dll_append(
+					&(TileDLLNode_dll_get_by_index(hands,board_index)->data),
+					selectedTile);
+			GET_HAND(board_index)->prev = NULL;
+		}
+	} else if (grabbed && (int) board_index == TileDLLNode_dll_len(hands)-1
+			&& GET_HAND(board_index) != selectedTile) {
+		TileDLLNodeDLLNode *temp;
+		Tile_pop_from_list(selectedTile);
+		GET_HAND(board_index)->prev = NULL;
+		board_index++;
+		temp = (TileDLLNodeDLLNode*) malloc(sizeof(TileDLLNodeDLLNode));
+		temp->data.prev = NULL;
+		temp->data.next = selectedTile;
+		TileDLLNode_dll_append(hands, temp);
+	}
+}
+
+void handle_up_press(void) {
+	if (!on_player_hand && board_index > BOARD) {
+		board_index--;
+		if (!grabbed)
+			selectedTile = Tile_dll_get_by_index(
+					GET_HAND(board_index), Tile_dll_idx(selectedTile));
+		else if (selectedTile != NULL) {
+			if (selectedTile->prev == NULL)
+				GET_HAND(board_index+1) = selectedTile->next;
+			Tile_pop_from_list(selectedTile);
+			Tile_dll_append(
+					&(TileDLLNode_dll_get_by_index(hands,board_index)->data),
+					selectedTile);
+			GET_HAND(board_index)->prev = NULL;
+		}
+	} else {
+		on_player_hand = 1;
+		if (!grabbed)
+			selectedTile = Tile_dll_get_by_index(
+					GET_HAND(cur_player), Tile_dll_idx(selectedTile));
+		else if (selectedTile != NULL) {
+			if (selectedTile->prev == NULL)
+				GET_HAND(board_index) = selectedTile->next;
+			Tile_pop_from_list(selectedTile);
+			Tile_dll_append(
+					&(TileDLLNode_dll_get_by_index(hands,cur_player)->data),
+					selectedTile);
+			GET_HAND(cur_player)->prev = NULL;
+			selectedTile = Tile_dll_get_by_index(
+					GET_HAND(cur_player), Tile_dll_idx(selectedTile));
+		}
+	}
 }
