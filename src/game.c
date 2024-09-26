@@ -6,12 +6,13 @@
 #include <ncurses.h>
 
 extern Hand board_index;
+Hand saved_board_index;
 int game_running = 0;
 int shuflag = 0;
 
-TileDLLNode *selectedTile;
-int grabbed = 0;
-int on_player_hand = 1;
+TileDLLNode *selectedTile, *saved_selectedTile;
+int grabbed = 0, saved_grabbed;
+int on_player_hand = 1, saved_on_player_hand;
 
 NodeStateDLLNode *(saved_states[30]);
 int len_saved_states = 0;
@@ -300,15 +301,30 @@ void save_hands_state(void) {
 		hand->data.prev = hand->data.next;
 	}
 	len_saved_states = i;
+	saved_selectedTile = selectedTile;
+	saved_board_index = board_index;
+	saved_on_player_hand = on_player_hand;
+	saved_grabbed = grabbed;
 }
 
 void load_hands_state(void) {
-	TileDLLNodeDLLNode *hand;
+	TileDLLNodeDLLNode *hand, *next;
 	int i = 0;
 	for (hand=hands; hand!=NULL && i<len_saved_states; hand=hand->next, i++) {
 		dll_load_state(TileDLLNode, saved_states[i]);
 		hand->data.next = hand->data.prev;
 	}
+	if (i < TileDLLNode_dll_len(hands)) {
+		hand->prev->next = NULL;
+		for (; hand != NULL; hand = next) {
+			next = hand->next;
+			free(hand);
+		}
+	}
+	selectedTile = saved_selectedTile;
+	board_index = saved_board_index;
+	grabbed = saved_grabbed;
+	on_player_hand = saved_on_player_hand;
 }
 
 void handle_down_press(void) {

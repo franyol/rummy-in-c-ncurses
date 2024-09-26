@@ -126,6 +126,8 @@ DECLARE_DOUBLE_LINKED_LIST(NodeState);
 
 #define dll_save_state(type, head, dest) \
 	type *_node; \
+	if (head == NULL) dest = NULL; \
+	else { \
 	NodeState temp = {(void*) head, (void*) head->prev, (void*) head->next}; \
 	NodeState_free_all(dest); \
     dest = NodeState_create_new_node(temp); \
@@ -134,7 +136,7 @@ DECLARE_DOUBLE_LINKED_LIST(NodeState);
 		temp.prev = (void*) _node->prev; \
 		temp.next = (void*) _node->next; \
 		NodeState_dll_append(dest, NodeState_create_new_node(temp)); \
-	}
+	}}
 
 #define dll_load_state(type, src) \
 	type *_node; \
