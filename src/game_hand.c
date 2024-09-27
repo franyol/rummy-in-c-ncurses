@@ -269,6 +269,7 @@ int is_straight(TileDLLNode *head) {
 			njokers++;
 			continue;
 		}
+		if (head->data.num == 0) continue;
 		if (head->data.num+1 != node->data.num) return -2;
 		if (head->data.color != node->data.color) return -3;
 	}
