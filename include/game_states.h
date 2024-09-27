@@ -90,6 +90,10 @@ void printw_hand_hidden(TileDLLNode *head);
 void printw_board();
 void place_board();
 
+int hand_ok(TileDLLNode *head, const char ** message);
+int is_trio(TileDLLNode *head);
+int is_straight(TileDLLNode *head);
+
 int animate_hands(struct timeval count, struct timeval duration);
 int animate_board(struct timeval count, struct timeval duration);
 

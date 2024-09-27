@@ -5,7 +5,16 @@
 #include <time.h>
 #include <ncurses.h>
 
+extern const char *line_messages[30];
+extern int line_messages_len;
+TileDLLNode *turn_start_hand[30];
+int turn_start_hand_len = 0;
+const char *general_message = "";
+
 extern Hand board_index;
+
+extern int dificulty;
+
 Hand saved_board_index;
 int game_running = 0;
 int shuflag = 0;
@@ -27,7 +36,7 @@ enum {
 extern TileDLLNodeDLLNode *hands;
 extern Hand cur_player;
 
-State shuffle_game(GameData *this);
+State shuffle_game(void);
 
 void save_hands_state(void);
 void load_hands_state(void);
@@ -35,12 +44,15 @@ void load_hands_state(void);
 void handle_down_press(void);
 void handle_up_press(void);
 
+int handle_turn_change(int);
+
 void game_on_enter(FSM_State *self, const void *arg) {
 	static GameData gdata = {0, SETTINGS};
 	if (self->data == NULL) self->data = (void*) &gdata;
 
 	if (arg != NULL) {
 		gdata.dificulty = ((GameArg*) arg)->dificulty;
+		dificulty = gdata.dificulty;
 		free((GameArg*) arg);
 	}
 
@@ -73,7 +85,10 @@ void game_on_enter(FSM_State *self, const void *arg) {
 
 int game_update(FSM_State *self, struct timeval *dt) {
 	GameData* this = (GameData*) self->data;
-	int x, y;
+	const char *message;
+	TileDLLNode *node;
+	TileDLLNodeDLLNode *hand;
+	int x, y, i;
 	int up_press = 0;
 	int down_press = 0;
 	int right_press = 0;
@@ -120,6 +135,12 @@ int game_update(FSM_State *self, struct timeval *dt) {
 		case 't':
 			save_state_press = 1;
 			break;
+		case 'n':
+			next_turn_press = 1;
+			break;
+		case 'm':
+			draw_tile_press = 1;
+			break;
 		default:
 			break;
 	}
@@ -132,17 +153,25 @@ int game_update(FSM_State *self, struct timeval *dt) {
 	clear_win();
 	switch(turn_state) {
 		case SHUFFLE:
-			return shuffle_game(this);
+			return shuffle_game();
 		case TURN_CHANGE:
 			getmaxyx(stdscr, y, x);
-			mvprintw(y/2-3, x/2-10, "It's Player %d's turn!", (cur_player - P1+1)); 
+			mvprintw(y/2-3, x/2-10, "It's Player %d's turn!", 
+					(((cur_player == P4) ? P1 : cur_player+1) - P1+1)); 
 			mvprintw(y/2-1, x/2-11, "Press Enter to continue"); 
 			if (select_press) {
+				cur_player++;
+				if (cur_player > P4) cur_player = P1;
 				turn_state = 
-				(get_dificulty(this->dificulty, cur_player) == 0) ? PLAYERMOVE : COMMOVE;
+				(get_dificulty(this->dificulty, cur_player) == 0) ? PLAYERMOVE : PLAYERMOVE;
 				selectedTile = GET_HAND(cur_player);
 				on_player_hand = 1;
 				save_hands_state();
+
+				for (i=0, node = GET_HAND(cur_player); node != NULL; node=node->next, i++) {
+					turn_start_hand[i] = node;
+				}
+				turn_start_hand_len = i;
 			}
 			return GAME;
 		case PLAYERMOVE:
@@ -177,12 +206,46 @@ int game_update(FSM_State *self, struct timeval *dt) {
 				load_hands_state();
 			} else if (save_state_press) {
 				save_hands_state();
+			} else if (next_turn_press) {
+				if (handle_turn_change(false)) {
+					turn_state = TURN_CHANGE;
+				}
+			} else if (draw_tile_press) {
+				TileDLLNode *drawnTile;
+				struct timeval duration;
+				if (handle_turn_change(true)) {
+					drawnTile = GET_HAND(DECK);
+					TileDLLNode_dll_get_by_index(hands, DECK)->data.next = drawnTile->next;
+					Tile_pop_from_list(drawnTile);
+					Tile_dll_append(GET_HAND(cur_player), drawnTile);
+					TileDLLNode_dll_sync(hands);
+					duration.tv_sec = 3;
+					duration.tv_usec = 0;
+					start_animation(duration, animate_board);
+					turn_state = TURN_CHANGE;
+				}
 			}
+			
+			// Check if game is correct
+			line_messages_len = 0;
+			for (hand=TileDLLNode_dll_get_by_index(hands,BOARD), i=0;
+					hand != NULL; hand = hand->next, i++) {
+				if (hand->data.next != NULL && !hand_ok(hand->data.next, &message)) line_messages_len++;
+				else message = "ok";
+				line_messages[i] = message;
+			}
+			if (line_messages_len == 0) {
+				//general_message = "Good to go!";
+			}
+
 			place_board();
 			if (selectedTile != NULL ) {
 				selectedTile->data.y--;
 				if (grabbed) {selectedTile->data.x-=2; selectedTile->data.y--;}
 			}
+			attrset(A_NORMAL | COLOR_PAIR(BLACK));
+			mvprintw(4, 1, "%s", general_message);
+			mvprintw(0, 3, "| r: reload | n: end turn | m: draw tile | q: end game | p: pause menu");
 			printw_board();
 			
 			return GAME;
@@ -225,7 +288,7 @@ void game_on_exit(FSM_State *self, void **arg) {
 	}
 }
 
-State shuffle_game(GameData *this) {
+State shuffle_game() {
 	struct timeval duration;
 	TileDLLNode *node;
 	duration.tv_sec = 1;
@@ -263,7 +326,7 @@ State shuffle_game(GameData *this) {
 		start_animation(duration, animate_hands);
 		shuflag++;
 	} else if (shuflag < 8) {
-		Tile temp = {0, 0, 0, 0, 0, BLACK};
+		Tile temp = {0, 0, 0, 0,0, BLACK};
 		TileDLLNode *draw, *head;
 		for (Hand i=P1; i <= P4; i++) {
 			head = Tile_create_new_node(temp);
@@ -314,7 +377,7 @@ void load_hands_state(void) {
 		dll_load_state(TileDLLNode, saved_states[i]);
 		hand->data.next = hand->data.prev;
 	}
-	if (i < TileDLLNode_dll_len(hands)) {
+	if (hand != NULL) {
 		hand->prev->next = NULL;
 		for (; hand != NULL; hand = next) {
 			next = hand->next;
@@ -358,18 +421,19 @@ void handle_down_press(void) {
 		}
 	} else if (grabbed && (int) board_index == TileDLLNode_dll_len(hands)-1
 			&& GET_HAND(board_index) != selectedTile) {
+		board_index++;
 		TileDLLNodeDLLNode *temp;
 		Tile_pop_from_list(selectedTile);
-		GET_HAND(board_index)->prev = NULL;
-		board_index++;
 		temp = (TileDLLNodeDLLNode*) malloc(sizeof(TileDLLNodeDLLNode));
 		temp->data.prev = NULL;
 		temp->data.next = selectedTile;
 		TileDLLNode_dll_append(hands, temp);
+		GET_HAND(board_index)->prev = NULL;
 	}
 }
 
 void handle_up_press(void) {
+	printw("%d ", TileDLLNode_dll_len(hands));
 	if (!on_player_hand && board_index > BOARD) {
 		board_index--;
 		if (!grabbed)
@@ -384,7 +448,7 @@ void handle_up_press(void) {
 					selectedTile);
 			GET_HAND(board_index)->prev = NULL;
 		}
-	} else {
+	} else if (!on_player_hand && board_index == BOARD) {
 		on_player_hand = 1;
 		if (!grabbed)
 			selectedTile = Tile_dll_get_by_index(
@@ -401,4 +465,37 @@ void handle_up_press(void) {
 					GET_HAND(cur_player), Tile_dll_idx(selectedTile));
 		}
 	}
+}
+
+int handle_turn_change(int drawn_a_card) {
+	TileDLLNode *node;
+	int valid_tiles = 1, i;
+	if (!drawn_a_card && turn_start_hand_len <= Tile_dll_len(GET_HAND(cur_player))) {
+		general_message = "Place 1 tile\n or draw\n one tile [m]";
+		valid_tiles = 0;
+	}
+	if (valid_tiles) {
+		for (node = GET_HAND(cur_player); node != NULL; node=node->next) {
+			valid_tiles = 0;
+			for (i=0;i<turn_start_hand_len;i++) {
+				if (node == turn_start_hand[i]) {
+					valid_tiles = 1;
+					break;
+				}
+			}
+			if (!valid_tiles) {
+				general_message = "You can't\n take tiles\n from the\n board";
+				break;
+			}
+		}
+	}
+
+	if (line_messages_len != 0) {
+		general_message = "Game board\n state is\n invalid";
+	}
+
+	if (valid_tiles && line_messages_len == 0) {
+		return 1;
+	}
+	return 0;
 }

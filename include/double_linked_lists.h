@@ -35,6 +35,7 @@
         while ( head->next != NULL ) head = head->next;               \
         head->next = new_node;                                        \
         new_node->prev = head;                                        \
+		new_node->next = NULL;                                        \
     }                                                                 \
                                                                       \
     void type##_dll_insert_after(type##DLLNode *node, type##DLLNode *new_node) { \
