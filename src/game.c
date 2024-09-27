@@ -30,7 +30,8 @@ enum {
 	SHUFFLE,
 	PLAYERMOVE,
 	COMMOVE,
-	TURN_CHANGE
+	TURN_CHANGE,
+	END_GAME
 } turn_state = SHUFFLE;
 
 extern TileDLLNodeDLLNode *hands;
@@ -154,6 +155,17 @@ int game_update(FSM_State *self, struct timeval *dt) {
 	switch(turn_state) {
 		case SHUFFLE:
 			return shuffle_game();
+		case END_GAME:
+			getmaxyx(stdscr, y, x);
+			mvprintw(y/2-3, x/2-10, "It's Player %d's WON", 
+					(((cur_player == P4) ? P1 : cur_player+1) - P1+1)); 
+			mvprintw(y/2-1, x/2-18, "Press Enter to go back to the menu"); 
+			if (select_press) {
+				game_running = false;
+				this->toState = START_MENU;
+				return START_MENU;
+			}
+			return GAME;
 		case TURN_CHANGE:
 			getmaxyx(stdscr, y, x);
 			mvprintw(y/2-3, x/2-10, "It's Player %d's turn!", 
@@ -208,16 +220,19 @@ int game_update(FSM_State *self, struct timeval *dt) {
 				save_hands_state();
 			} else if (next_turn_press) {
 				if (handle_turn_change(false)) {
-					turn_state = TURN_CHANGE;
+					turn_state = (Tile_dll_len(GET_HAND(cur_player)) > 0) ?
+						TURN_CHANGE : END_GAME;
 				}
 			} else if (draw_tile_press) {
 				TileDLLNode *drawnTile;
 				struct timeval duration;
 				if (handle_turn_change(true)) {
 					drawnTile = GET_HAND(DECK);
+					if (drawnTile != NULL) {
 					TileDLLNode_dll_get_by_index(hands, DECK)->data.next = drawnTile->next;
 					Tile_pop_from_list(drawnTile);
 					Tile_dll_append(GET_HAND(cur_player), drawnTile);
+					}
 					TileDLLNode_dll_sync(hands);
 					duration.tv_sec = 3;
 					duration.tv_usec = 0;

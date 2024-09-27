@@ -4,7 +4,7 @@
 
 void start_menu_on_enter(FSM_State *self, const void *arg) {
 	static char *options[] = {"play", "settings", "quit"};
-	static StartMenuData smdata = {options, 3, 0, 1110, GAME};
+	static StartMenuData smdata = {options, 3, 0, 0, GAME};
 	if (self->data == NULL) self->data = (void*) &smdata;
 
 	if (arg != NULL) {
