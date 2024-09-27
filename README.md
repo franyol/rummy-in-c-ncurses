@@ -8,8 +8,11 @@ Recreating the rummy game using ncurses
 
 ## Build
 
+All: `make all`
 Tests: `make tests`
 
-Main: `make main`
+## Run
 
-All: `make all`
+```
+./build/main
+```
